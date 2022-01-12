@@ -1,7 +1,9 @@
 \documentclass[12pt, letterpaper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage{csvsimple}
+\usepackage{longtable}
 \usepackage{adjustbox}
+\usepackage{booktabs}
 
 \title{VPC Endpoints}
 \author{Krzysztof Dziuban}
@@ -19,9 +21,24 @@
 
 \begin{adjustbox}{width=1\textwidth}
 
-\csvautotabular{ {{ env }}.csv}
+\csvautotabular{ endpoint-list-{{ env }}.csv}
 
 \end{adjustbox}
 {% endfor %}
 
+\section{Costs}
+{% for env in envs %}
+\subsection{Env: {{ env }}}
+
+    \csvreader[
+    longtable=lrrrr,
+    table head=
+    \toprule\bfseries start date & \bfseries end date & \bfseries name & \bfseries value & \bfseries unit\\
+    \midrule\endhead\bottomrule\endfoot,
+    late after line=\\,
+    before reading={\catcode`\#=12},after reading={\catcode`\#=6}
+    ]{costs-{{ env }}.csv}{1=\ColOne, 2=\ColTwo, 3=\ColThree, 4=\ColFour, 5=\ColFive}
+    {\ColOne & \ColTwo & \ColThree & \ColFour & \ColFive}
+
+{% endfor %}
 \end{document}
