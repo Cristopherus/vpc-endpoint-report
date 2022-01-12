@@ -1,5 +1,6 @@
 #!/bin/bash
 
+rm *.log
 rm *.aux
 rm *.pdf
 rm *.toc

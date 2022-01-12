@@ -3,6 +3,7 @@ Creates tex file from templates with data from csv files
 '''
 import logging
 import glob
+from datetime import datetime
 from jinja2 import Template
 
 def main():
@@ -16,7 +17,7 @@ def main():
     logging.info("Creating tex file from template")
     with open('endpoints.tex.j2',encoding='utf-8') as file:
         template = Template(file.read())
-        template.stream(envs=envs).dump('endpoints.tex')
+        template.stream(envs=envs, date=datetime.date(datetime.now())).dump('endpoints.tex')
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
