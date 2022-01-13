@@ -72,11 +72,13 @@ do
     echo "endpoint id,type,vpc,name,creation timestamp" > "endpoint-list-$env.csv"
     echo "$ENDPOINTS" >> "endpoint-list-$env.csv"
   fi
-  COSTS=$(aws ce get-cost-and-usage --time-period $TIME --granularity DAILY --metrics "UNBLENDED_COST" "USAGE_QUANTITY" --group-by Type=TAG,Key=Name --filter file://filter.json | jq -r '.ResultsByTime[] | "\(.TimePeriod.Start),\(.TimePeriod.End),\(.Groups[] | "\(.Keys[]),\(.Metrics.UnblendedCost.Amount),\(.Metrics.UnblendedCost.Unit)")"')
+  COSTS=$(aws ce get-cost-and-usage --time-period $TIME --granularity MONTHLY --metrics "UNBLENDED_COST" "USAGE_QUANTITY" --group-by Type=TAG,Key=Name --filter file://filter.json )
   if [[ -n "$COSTS" ]]
   then
     echo "start date, stop date, name, value, unit" > "costs-$env.csv"
-    echo "${COSTS//Name$}" >> "costs-$env.csv"
+    echo "${COSTS//Name$}" | jq -r '.ResultsByTime[] | "\(.TimePeriod.Start),\(.TimePeriod.End),\(.Groups[] | "\(.Keys[]),\(.Metrics.UnblendedCost.Amount),\(.Metrics.UnblendedCost.Unit)")"' >> "costs-$env.csv"
+    echo "start date, stop date, name, value, unit" > "usage-$env.csv"
+    echo "${COSTS//Name$}" | jq -r '.ResultsByTime[] | "\(.TimePeriod.Start),\(.TimePeriod.End),\(.Groups[] | "\(.Keys[]),\(.Metrics.UsageQuantity.Amount),\(.Metrics.UsageQuantity.Unit)")"' >> "usage-$env.csv"
   fi
 done
 python3 prepare_report.py
