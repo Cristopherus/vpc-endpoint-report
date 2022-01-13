@@ -1,8 +1,20 @@
 {
-    "Dimensions": {
-       "Key": "SERVICE",
-       "Values": [
-         "Amazon Virtual Private Cloud"
-       ]
-    }
+    "And": [
+        {
+            "Dimensions": {
+                "Key": "SERVICE",
+                "Values": [
+                    "Amazon Virtual Private Cloud"
+                ]
+            }
+        },
+        {
+            "Dimensions": {
+                "Key": "USAGE_TYPE",
+                "Values": [
+                    "EU-VpcEndpoint-Bytes"
+                ]
+            }
+        }
+    ]
 }

@@ -30,15 +30,17 @@
 {% for env in envs %}
 \subsection{Env: {{ env }}}
 
-    \csvreader[
-    longtable=lrrrr,
-    table head=
-    \toprule\bfseries start date & \bfseries end date & \bfseries name & \bfseries value & \bfseries unit\\
-    \midrule\endhead\bottomrule\endfoot,
-    late after line=\\,
-    before reading={\catcode`\#=12},after reading={\catcode`\#=6}
-    ]{costs-{{ env }}.csv}{1=\ColOne, 2=\ColTwo, 3=\ColThree, 4=\ColFour, 5=\ColFive}
-    {\ColOne & \ColTwo & \ColThree & \ColFour & \ColFive}
+\small
+\setlength\tabcolsep{3pt} 
+\csvreader[
+longtable=|c|c|c|c|c|,
+table head=
+\toprule\bfseries start date & \bfseries end date & \bfseries name & \bfseries value & \bfseries unit\\
+\midrule\endhead\bottomrule\endfoot,
+late after line=\\,
+before reading={\catcode`\#=12},after reading={\catcode`\#=6}
+]{costs-{{ env }}.csv}{1=\ColOne, 2=\ColTwo, 3=\ColThree, 4=\ColFour, 5=\ColFive}
+{\ColOne & \ColTwo & \ColThree & \ColFour & \ColFive}
 
 {% endfor %}
 \end{document}

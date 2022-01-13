@@ -2,7 +2,8 @@
 set -eu -o pipefail -E
 
 ENVS=()
-REGION=eu-west-1
+REGION="eu-west-1"
+TIME="Start=2022-01-01,End=2022-01-13"
 
 usage() {
   echo "$__usage"
@@ -15,6 +16,7 @@ Usage: $(basename "$0") [OPTIONS]
 Options:
   -e, --envs         environment list (separated by comma) i.e. dev,stage,prod
   -r, --region       aws region
+  -t, --time         time period in format Start=2022-01-01,End=2022-01-13
 "
 
 if (( $# < 1 ))
@@ -37,6 +39,13 @@ while [ $# -gt 0 ]; do
       ;;
     -r|--region=*)
       REGION="${1#*=}"
+      ;;
+    -t|--time)
+      shift
+      TIME="$1"
+      ;;
+    -t|--time=*)
+      TIME="${1#*=}"
       ;;
     -h|--help|-h=*|--help=*)
       usage
@@ -63,11 +72,11 @@ do
     echo "endpoint id,type,vpc,name,creation timestamp" > "endpoint-list-$env.csv"
     echo "$ENDPOINTS" >> "endpoint-list-$env.csv"
   fi
-  COSTS=$(aws ce get-cost-and-usage --region "$REGION" --time-period Start=2021-12-01,End=2022-01-01 --granularity DAILY --metrics "UnblendedCost" --group-by Type=DIMENSION,Key=USAGE_TYPE --filter file://filter.json | jq -r '.ResultsByTime[] | "\(.TimePeriod.Start),\(.TimePeriod.End),\(.Groups[] | "\(.Keys[]),\(.Metrics.UnblendedCost.Amount),\(.Metrics.UnblendedCost.Unit)")"')
+  COSTS=$(aws ce get-cost-and-usage --time-period $TIME --granularity DAILY --metrics "UNBLENDED_COST" "USAGE_QUANTITY" --group-by Type=TAG,Key=Name --filter file://filter.json | jq -r '.ResultsByTime[] | "\(.TimePeriod.Start),\(.TimePeriod.End),\(.Groups[] | "\(.Keys[]),\(.Metrics.UnblendedCost.Amount),\(.Metrics.UnblendedCost.Unit)")"')
   if [[ -n "$COSTS" ]]
   then
     echo "start date, stop date, name, value, unit" > "costs-$env.csv"
-    echo "$COSTS" >> "costs-$env.csv"
+    echo "${COSTS//Name$}" >> "costs-$env.csv"
   fi
 done
 python3 prepare_report.py
