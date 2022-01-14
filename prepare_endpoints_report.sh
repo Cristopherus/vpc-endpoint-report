@@ -37,14 +37,14 @@ while [ $# -gt 0 ]; do
       shift
       REGION="$1"
       ;;
-    -r|--region=*)
+    -r=*|--region=*)
       REGION="${1#*=}"
       ;;
     -t|--time)
       shift
       TIME="$1"
       ;;
-    -t|--time=*)
+    -t=*|--time=*)
       TIME="${1#*=}"
       ;;
     -h|--help|-h=*|--help=*)
@@ -72,7 +72,7 @@ do
     echo "endpoint id,type,vpc,name,creation timestamp" > "endpoint-list-$env.csv"
     echo "$ENDPOINTS" >> "endpoint-list-$env.csv"
   fi
-  COSTS=$(aws ce get-cost-and-usage --time-period $TIME --granularity MONTHLY --metrics "UNBLENDED_COST" "USAGE_QUANTITY" --group-by Type=TAG,Key=Name --filter file://filter.json )
+  COSTS=$(aws ce get-cost-and-usage --time-period "$TIME" --granularity MONTHLY --metrics "UNBLENDED_COST" "USAGE_QUANTITY" --group-by Type=TAG,Key=Name --filter file://filter.json )
   if [[ -n "$COSTS" ]]
   then
     echo "start date, stop date, name, value, unit" > "costs-$env.csv"
@@ -83,5 +83,10 @@ do
 done
 python3 prepare_report.py
 
-pdflatex endpoints.tex
-pdflatex endpoints.tex
+pdflatex endpoints-report.tex
+pdflatex endpoints-report.tex
+
+mkdir -p ./reports
+mv *.csv reports/
+mv endpoints-report.pdf reports/
+

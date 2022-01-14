@@ -6,3 +6,4 @@ rm *.pdf
 rm *.toc
 rm *.tex
 rm *.csv
+rm -rf reports
