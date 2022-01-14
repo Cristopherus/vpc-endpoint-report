@@ -60,4 +60,20 @@ before reading={\catcode`\#=12},after reading={\catcode`\#=6}
 {\ColOne & \ColTwo & \ColThree & \ColFour & \ColFive}
 {% endfor %}
 
+\section{Summary}
+VPC endpoints not found in cost/usage report - probably not used:
+
+{% for key, values in not_used.items() %}
+\subsection{Env: {{ key }} }
+\begin{longtable}{|c|}
+\hline
+\textbf{VPC endpoint name} \\
+\hline
+{% for value in values %}
+{{ value}} \\
+\hline
+{% endfor %}
+{% endfor %}
+\end{longtable}
+
 \end{document}
