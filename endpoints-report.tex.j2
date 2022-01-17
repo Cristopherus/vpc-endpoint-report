@@ -19,11 +19,17 @@
 {% for env in envs %}
 \subsection{Env: {{ env }}}
 
-\begin{adjustbox}{width=1\textwidth}
-
-\csvautotabular{ endpoint-list-{{ env }}.csv}
-
-\end{adjustbox}
+\small
+\setlength\tabcolsep{3pt} 
+\csvreader[
+longtable=|c|c|c|,
+table head=
+\toprule\bfseries \bfseries name & \bfseries type & \bfseries creation time \\
+\midrule\endhead\bottomrule\endfoot,
+late after line=\\,
+before reading={\catcode`\#=12},after reading={\catcode`\#=6}
+]{endpoint-list-{{ env }}.csv}{1=\ColOne, 2=\ColTwo, 3=\ColThree}
+{\ColOne & \ColTwo & \ColThree}
 {% endfor %}
 
 \section{Usage}
@@ -73,7 +79,7 @@ VPC endpoints not found in cost/usage report - probably not used:
 {{ value}} \\
 \hline
 {% endfor %}
-{% endfor %}
 \end{longtable}
+{% endfor %}
 
 \end{document}

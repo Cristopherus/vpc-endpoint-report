@@ -3,7 +3,9 @@ set -eu -o pipefail -E
 
 ENVS=()
 REGION="eu-west-1"
-TIME="Start=2022-01-01,End=2022-01-13"
+END_DATE=$(date +'%Y-%m-%d')
+BEGINNING_DATE=$(date +'%Y-%m-%d' -d "7 days ago")
+TIME_PERIOD="Start=$BEGINNING_DATE,End=$END_DATE"
 
 usage() {
   echo "$__usage"
@@ -42,10 +44,10 @@ while [ $# -gt 0 ]; do
       ;;
     -t|--time)
       shift
-      TIME="$1"
+      TIME_PERIOD="$1"
       ;;
     -t=*|--time=*)
-      TIME="${1#*=}"
+      TIME_PERIOD="${1#*=}"
       ;;
     -h|--help|-h=*|--help=*)
       usage
@@ -62,17 +64,18 @@ then
   usage
 fi
 
+export AWS_PROFILE=web-dev
+aws sso login --profile $AWS_PROFILE
 for env in "${ENVS[@]}"
 do
-  export AWS_PROFILE=abacai-$env
-  aws sso login
-  ENDPOINTS=$(aws ec2 describe-vpc-endpoints --region "$REGION" |jq -r '.VpcEndpoints[] | "\(.VpcEndpointId),\(.VpcEndpointType),\(.VpcId),\(.Tags[] | select(.Key=="Name") | .Value),\(.CreationTimestamp)"')
+  export AWS_PROFILE=$env
+  ENDPOINTS=$(aws ec2 describe-vpc-endpoints --region "$REGION" | jq -r '.VpcEndpoints[] | "\((.Tags[] | select(.Key=="Name").Value)? // ""),\(.VpcEndpointType),\(.CreationTimestamp)"')
   if [[ -n "$ENDPOINTS" ]]
   then
-    echo "endpoint id,type,vpc,name,creation timestamp" > "endpoint-list-$env.csv"
+    echo "name,type,creation timestamp" > "endpoint-list-$env.csv"
     echo "$ENDPOINTS" >> "endpoint-list-$env.csv"
   fi
-  COSTS=$(aws ce get-cost-and-usage --time-period "$TIME" --granularity MONTHLY --metrics "UNBLENDED_COST" "USAGE_QUANTITY" --group-by Type=TAG,Key=Name --filter file://filter.json )
+  COSTS=$(aws ce get-cost-and-usage --time-period "$TIME_PERIOD" --granularity MONTHLY --metrics "UNBLENDED_COST" "USAGE_QUANTITY" --group-by Type=TAG,Key=Name --filter file://filter.json )
   if [[ -n "$COSTS" ]]
   then
     echo "start date,stop date,name,value,unit" > "costs-$env.csv"
