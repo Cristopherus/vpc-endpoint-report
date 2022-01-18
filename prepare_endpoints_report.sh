@@ -68,14 +68,15 @@ export AWS_PROFILE=web-dev
 aws sso login --profile $AWS_PROFILE
 for env in "${ENVS[@]}"
 do
+  echo "Env: $env"
   export AWS_PROFILE=$env
-  ENDPOINTS=$(aws ec2 describe-vpc-endpoints --region "$REGION" | jq -r '.VpcEndpoints[] | "\((.Tags[] | select(.Key=="Name").Value)? // ""),\(.VpcEndpointType),\(.CreationTimestamp)"')
+  ENDPOINTS=$(aws ec2 describe-vpc-endpoints --region "$REGION" 2>"error-$env.log" | jq -r '.VpcEndpoints[] | "\((.Tags[] | select(.Key=="Name").Value)? // ""),\(.VpcEndpointType),\(.CreationTimestamp)"' )  || continue
   if [[ -n "$ENDPOINTS" ]]
   then
     echo "name,type,creation timestamp" > "endpoint-list-$env.csv"
     echo "$ENDPOINTS" >> "endpoint-list-$env.csv"
   fi
-  COSTS=$(aws ce get-cost-and-usage --time-period "$TIME_PERIOD" --granularity MONTHLY --metrics "UNBLENDED_COST" "USAGE_QUANTITY" --group-by Type=TAG,Key=Name --filter file://filter.json )
+  COSTS=$(aws ce get-cost-and-usage --time-period "$TIME_PERIOD" --granularity MONTHLY --metrics "UNBLENDED_COST" "USAGE_QUANTITY" --group-by Type=TAG,Key=Name --filter file://filter.json 2>"error-$env.log") || continue
   if [[ -n "$COSTS" ]]
   then
     echo "start date,stop date,name,value,unit" > "costs-$env.csv"
@@ -84,12 +85,22 @@ do
     echo "${COSTS//Name$}" | jq -r '.ResultsByTime[] | "\(.TimePeriod.Start),\(.TimePeriod.End),\(.Groups[] | "\(.Keys[]),\(.Metrics.UsageQuantity.Amount),\(.Metrics.UsageQuantity.Unit)")"' >> "usage-$env.csv"
   fi
 done
+
 python3 prepare_report.py
 
 pdflatex endpoints-report.tex
 pdflatex endpoints-report.tex
 
 mkdir -p ./reports
-mv *.csv reports/
-mv endpoints-report.pdf reports/
 
+for env in "${ENVS[@]}"
+do
+  ERROR=$(cat error-$env.log)
+  if [[ -n "$ERROR" ]]
+  then
+    echo "$env: $ERROR"
+  fi
+done
+
+mv endpoints-report.pdf reports/
+mv *.csv reports/
